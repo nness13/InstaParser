@@ -709,12 +709,12 @@ function Task(props) {
     state.dependencies = ['state.taskManager']
     let task = state.taskManager.find(t => t.id === parseInt(state.route.split('/')[1]))
     console.log(task)
-    if(!task) state.update('state.route', '/')
+//    if(!task) state.update('state.route', '/')
 
     function router() {
-        if(task.step === 'typeTask') return `<TaskStepAction ${toProps({task})}/>`
-        if(task.step === 'userList') return `<TaskUserList ${toProps({task})}/>`
-        if(task.step === 'taskParams') return `<TaskParams ${toProps({task})}/>`
+        if(task?.step === 'typeTask') return `<TaskStepAction ${toProps({task})}/>`
+        if(task?.step === 'userList') return `<TaskUserList ${toProps({task})}/>`
+        if(task?.step === 'taskParams') return `<TaskParams ${toProps({task})}/>`
     }
     return `
         <div class="Container">
@@ -789,17 +789,18 @@ function TaskUserList() {
     let task = state.taskManager.find(t => t.id === parseInt(state.route.split('/')[1]))
     let clearList = () => state.update('state.taskManager', () => task.userList = [])
     let inspectionRun = () => {
-        hiddenApp();
-        window.saveUserList = task.userList
-        window.saveUserListFunction = () => state.update('state.taskManager')
-        ServiceGetUserList()
+        state.update('state.service', data => data.collectUserListService.stop = false);
+        getUserList([], {})
     }
-    let autoSearchDivList = () => {
-        startGetUserList()
-        window.saveUserList = task.userList
-        window.saveUserListFunction = () => state.update('state.taskManager')
-        autoDivGetUserLink({})
+
+    const copyAreaText = e => {
+        const copyText = document.getElementById('copyArea')
+        copyText.select();
+        document.execCommand("copy");
+        e.currentTarget.innerHTML = 'Скопировано'
     }
+
+    console.log(task)
 
     return `
         <div class="wrapCreateList column">
@@ -815,29 +816,33 @@ function TaskUserList() {
                                 <img style="margin: 0 2px" src="${iconLink}/person-remove.svg" class="icon beColor">
                             </div>
                             ${state.service.collectUserListService.stop
-                                ? `<div jclick="${useHandler(autoSearchDivList)}">
+                                ? `<div jclick="${useHandler(inspectionRun)}">
                                         <img style="margin: 0 2px" src="${iconLink}/person-add.svg" class="icon beColor">
                                     </div>`
                                 : `<div jclick="${useHandler( () => state.update('state.service', data => data.collectUserListService.stop = true) )}">
                                         <img style="margin: 0 2px" src="${iconLink}/pause.svg" class="icon beColor">
                                     </div>`
                             }
-                            <div jclick="${useHandler(inspectionRun)}">
+                            <div>
                                 <img style="margin: 0 2px" src="${iconLink}/open.svg" class="icon beColor">
                             </div>
                         </div>
                     </div>
-                    ${task.userList.map(el =>
-                        `<div class="itemList">
-                            <img src="${el.img}" style="width: 30px; height: 30px"/>
-                            <a href="${el.pathname}" target="_blank" style="width: 100%;">${el.title}</a>
-                            <div jclick="${useHandler(() => 
-                                    state.update('state.taskManager', () => task.userList = task.userList.filter(o => o.title !== el.title))
-                                )}">
-                                <img src="${iconLink}/close.svg" class="icon beColor">
-                            </div>
-                        </div>`
+                    ${task.userList.map(el => ``
+//                        `<div class="itemList">
+//                            <img src="${el.img}" style="width: 30px; height: 30px"/>
+//                            <a href="${el.pathname}" target="_blank" style="width: 100%;">${el.title}</a>
+//                            <div jclick="${useHandler(() => 
+//                                    state.update('state.taskManager', () => task.userList = task.userList.filter(o => o.title !== el.title))
+//                                )}">
+//                                <img src="${iconLink}/close.svg" class="icon beColor">
+//                            </div>
+//                        </div>`
                     ).join('')}
+                    <div>
+                        <textarea name="copy" id="copyArea" cols="30" rows="10">${task.userList.map(el => `${el.title}`).join('\n')}</textarea>
+                        <div class="btn"  jclick="${useHandler(copyAreaText)}">Скопировать</div>
+                    </div>
                 </div>
             </div>
             <PrevNextPanel ${toProps({task})} />
@@ -1076,44 +1081,7 @@ let createTaskMap = [
                 action: 'taskParams',
             }
         }
-    },
-    {
-        title: "Подписка по спыску пользователей",
-        action: 'autoFollow',
-        next: {
-            action: 'userList',
-            next: {
-                action: 'taskParams',
-            }
-        }
-    },
-    {
-        title: "Отписка по спыску пользователей",
-        action: 'autoUnFollow',
-        next: {
-            action: 'userList',
-            next: {
-                action: 'taskParams',
-            }
-        }
-    },
-    {
-        title: "Лайкинг ленти новостей",
-        action: 'autoLikeFeed',
-        next: {
-            action: 'taskParams',
-        }
-    },
-    {
-        title: "Лайк постов по спыску пользователей",
-        action: 'autoLikeFirstPostUserList',
-        next: {
-            action: 'userList',
-            next: {
-                action: 'taskParams',
-            }
-        }
-    },
+    }
 ]
 
 let routes = {

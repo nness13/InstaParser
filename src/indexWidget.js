@@ -143,7 +143,8 @@ function createApp() {
             noMutualFollowList: [],
             like_list: [],
             collectUserListService: {
-              stop: true
+                userList: [],
+                stop: true
             },
             log_Task_action: [],
             userInspectionList: [],
